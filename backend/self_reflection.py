@@ -1,8 +1,7 @@
 import json
-from llama_index.llms import OpenAI
 from typing import Dict
 
-def reflect_on_answer(question: str, answer: str, retrieved_context: str, llm: OpenAI) -> Dict:
+def reflect_on_answer(question: str, answer: str, retrieved_context: str, llm) -> Dict:
     """
     Use LLM to evaluate the answer and determine if it needs improvement.
     

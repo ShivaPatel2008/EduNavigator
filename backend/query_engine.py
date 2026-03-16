@@ -1,24 +1,34 @@
-from llama_index import QueryBundle
-from llama_index.retrievers import VectorIndexRetriever, MultiQueryRetriever
-from llama_index.postprocessor import SentenceTransformerRerank
-from llama_index.llms import OpenAI
-from llama_index.query_engine import RetrieverQueryEngine
-from llama_index.prompts import PromptTemplate
+from llama_index.core.schema import QueryBundle
+from llama_index.core.retrievers import VectorIndexRetriever, QueryFusionRetriever
+from llama_index.core.response_synthesizers import get_response_synthesizer
+from llama_index.core.postprocessor import SentenceTransformerRerank
+from llama_index.core.query_engine import RetrieverQueryEngine
+from llama_index.core.prompts import PromptTemplate
 from build_index import load_persisted_index
 from query_classifier import QueryClassifier
 from answer_validator import AnswerValidator
 from hybrid_retriever import HybridRetriever
 from knowledge_graph import KnowledgeGraph
 from self_reflection import reflect_on_answer
-from gemini_llm import GeminiLLM
+from gpt4all_llm import LocalLLM
 import os
 import json
 import time
 from typing import List, Dict
 from dotenv import load_dotenv
+from llama_index.core import Settings
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 
+Settings.embed_model = HuggingFaceEmbedding(
+    model_name="sentence-transformers/all-MiniLM-L6-v2"
+)
 # Load environment variables
 load_dotenv()
+
+# Load size control variables
+MAX_ANSWER_LENGTH = int(os.getenv("MAX_ANSWER_LENGTH", "150"))
+MAX_SOURCES = int(os.getenv("MAX_SOURCES", "3"))
+MAX_HIGHLIGHTED_CHUNKS = int(os.getenv("MAX_HIGHLIGHTED_CHUNKS", "2"))
 
 # Custom prompt
 CUSTOM_PROMPT = PromptTemplate(
@@ -91,29 +101,19 @@ def create_query_engine(storage_dir: str = "storage", llm_model: str = None, top
     Create a query engine with hybrid retrieval, MMR, and reranking.
     """
     if llm_model is None:
-        llm_model = os.getenv("LLM_MODEL", "gemini-3-flash-preview")
+        llm_model = os.getenv("LLM_MODEL", "llama3-8b-8192")
 
     # Load index
     index = load_persisted_index(storage_dir)
 
-    # LLM - Use Gemini instead of OpenAI
-    llm = GeminiLLM(model_name=llm_model, temperature=0.1)
+    # LLM - Use GPT4All for local inference
+    llm = LocalLLM(model_name=llm_model, temperature=0.1)
 
-    # Hybrid retriever
-    documents = [node.text for node in index.docstore.docs.values()]
-    nodes = list(index.docstore.docs.values())
-    vector_store = index._vector_store
-    retriever = HybridRetriever(vector_store, documents, nodes)
-
-    # Multi-query retriever wrapper
-    multi_retriever = MultiQueryRetriever(
-        retriever=retriever,
-        llm=llm,
-        num_queries=3
+    # Use VectorIndexRetriever directly
+    retriever = VectorIndexRetriever(
+        index=index,
+        similarity_top_k=top_k,
     )
-    
-    # Set top_k
-    multi_retriever.similarity_top_k = top_k
 
     # Reranker
     reranker = SentenceTransformerRerank(
@@ -122,12 +122,18 @@ def create_query_engine(storage_dir: str = "storage", llm_model: str = None, top
     )
 
     # Query engine
-    query_engine = RetrieverQueryEngine(
-        retriever=multi_retriever,
-        response_synthesizer=None,  # We'll use LLM directly
-        node_postprocessors=[reranker],
+    # Response synthesizer
+    response_synthesizer = get_response_synthesizer(
+        llm=llm,
+        text_qa_template=CUSTOM_PROMPT
     )
 
+    # Query engine
+    query_engine = RetrieverQueryEngine(
+        retriever=retriever,
+        response_synthesizer=response_synthesizer,
+        node_postprocessors=[reranker],
+    )
     # Set custom prompt
     query_engine.update_prompts({"response_synthesizer:text_qa_template": CUSTOM_PROMPT})
 
@@ -135,22 +141,22 @@ def create_query_engine(storage_dir: str = "storage", llm_model: str = None, top
 
 def query_with_sources(question: str, query_engine, llm, filters: dict = None, conversation_id: str = None):
     """
-    Query the engine with self-reflection loop, return answer with sources and highlighted chunks.
+    Query the engine with self-reflection loop, return concise answer with sources and short highlighted chunks.
     Includes expansion, validation, logging, and self-reflection.
     """
     start_time = time.time()
-    
+
     # Classify query
     classifier = QueryClassifier()
     query_type = classifier.classify(question)
     if not filters:
         filters = classifier.get_filters(query_type)
-    
+
     # Conversation memory
     history = ""
     if conversation_id and conversation_id in conversation_memory:
         history = "\n".join([f"Q: {h['question']}\nA: {h['answer']}" for h in conversation_memory[conversation_id][-5:]])  # Last 5 exchanges
-    
+
     # Self-reflection loop
     iteration_count = 0
     max_iterations = 2
@@ -161,18 +167,18 @@ def query_with_sources(question: str, query_engine, llm, filters: dict = None, c
     final_sources = None
     final_chunks = None
     expanded_queries = None
-    
+
     while iteration_count < max_iterations:
         # Create engine with current top_k
         current_engine, current_llm = create_query_engine(top_k=top_k)
-        
+
         # Get answer with retrieval
         answer, sources, chunks, retrieved_context, expanded_queries = get_answer_with_retrieval(question, current_engine, current_llm)
-        
+
         # Self-reflection
         reflection = reflect_on_answer(question, answer, retrieved_context, current_llm)
         reflection_results.append(reflection)
-        
+
         if reflection['is_sufficient']:
             final_answer = answer
             final_sources = sources
@@ -192,21 +198,42 @@ def query_with_sources(question: str, query_engine, llm, filters: dict = None, c
         final_answer = answer
         final_sources = sources
         final_chunks = chunks
-    
+
     # Validate answer
     validator = AnswerValidator()
     final_answer = validator.get_final_answer(question, final_answer, retrieved_context)
-    
+
+    # Make answer concise (1-3 sentences)
+    concise_prompt = f"""
+    Summarize the following answer in 1-3 simple sentences using plain English only. Remove any unnecessary details, symbols, or formatting. Keep the answer under {MAX_ANSWER_LENGTH} characters:
+
+    Original answer: {final_answer}
+
+    Concise summary:
+    """
+    concise_answer = llm.complete(concise_prompt).text.strip()
+
+    # Limit sources to max configured value
+    limited_sources = final_sources[:MAX_SOURCES] if len(final_sources) > MAX_SOURCES else final_sources
+
+    # Create short highlighted chunks (max configured, each < 100 chars)
+    short_chunks = []
+    for chunk in final_chunks[:MAX_HIGHLIGHTED_CHUNKS]:  # Max configured chunks
+        # Take first 100 characters and clean up
+        short_chunk = chunk[:100].strip()
+        if len(short_chunk) > 50:  # Only include if meaningful length
+            short_chunks.append(short_chunk)
+
     # Update conversation memory
     if conversation_id:
         if conversation_id not in conversation_memory:
             conversation_memory[conversation_id] = []
         conversation_memory[conversation_id].append({
             "question": question,
-            "answer": final_answer,
+            "answer": concise_answer,
             "timestamp": time.time()
         })
-    
+
     # Log
     log_data = {
         "timestamp": time.time(),
@@ -214,21 +241,21 @@ def query_with_sources(question: str, query_engine, llm, filters: dict = None, c
         "question": question,
         "query_type": query_type,
         "expanded_queries": expanded_queries,
-        "retrieved_sources": final_sources,
-        "final_answer": final_answer,
+        "retrieved_sources": limited_sources,
+        "final_answer": concise_answer,
         "response_time": time.time() - start_time,
         "reflection_results": reflection_results,
         "iteration_count": iteration_count + 1,
         "improved_answer": improved_answer
     }
     log_query(log_data)
-    
+
     reflection_metadata = {
         "iteration_count": iteration_count + 1,
         "improved_answer": improved_answer
     }
-    
-    return final_answer, final_sources, query_type, len(final_chunks), final_chunks, reflection_metadata
+
+    return concise_answer, limited_sources, query_type, len(short_chunks), short_chunks, reflection_metadata
 
 if __name__ == "__main__":
     engine, llm = create_query_engine()
@@ -237,5 +264,5 @@ if __name__ == "__main__":
     print(f"Sources: {sources}")
     print(f"Query Type: {query_type}")
     print(f"Retrieved Chunks: {retrieved_chunks}")
-    print(f"Highlighted Chunks: {len(highlighted_chunks)}")
+    print(f"Highlighted Chunks: {highlighted_chunks}")
     print(f"Reflection: {reflection}")

@@ -1,6 +1,5 @@
 import networkx as nx
 import spacy
-from llama_index.llms import OpenAI
 import os
 from typing import List, Dict
 from dotenv import load_dotenv

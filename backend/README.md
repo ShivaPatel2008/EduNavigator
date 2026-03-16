@@ -49,11 +49,11 @@ backend/
    ```bash
    cp .env .env.local
    ```
-   - Edit `.env.local` and add your Gemini API key:
+   - Edit `.env.local` and configure GPT4All model:
    ```
-   GEMINI_API_KEY=your_actual_gemini_api_key_here
+   LLM_MODEL=gpt4all-mini
    ```
-   - Get your API key from: https://makersuite.google.com/app/apikey
+   - GPT4All will automatically download the model on first use (no API key required)
    - The `.env.local` file is gitignored for security
 
 3. **Place your program documents** (text/PDF) in the `data/` folder.
@@ -77,9 +77,8 @@ backend/
 
 ### Environment Variables
 
-- `GEMINI_API_KEY`: Your Google Gemini API key (required)
-- `LLM_MODEL`: LLM model to use (default: gemini-3-flash-preview)
-  - Options: `gemini-pro`, `gemini-pro-vision`, `gemini-3-flash-preview`
+- `LLM_MODEL`: GPT4All model to use (default: gpt4all-mini)
+  - Options: `gpt4all-mini`, `orca-mini`, `llama-2-7b-chat`, etc.
 - `HOST`: Server host (default: 127.0.0.1)
 - `PORT`: Server port (default: 8001)
 
@@ -116,8 +115,8 @@ Response:
 
 ## Configuration
 
-- Set `OPENAI_API_KEY` environment variable for LLM access
-- Optionally set `LLM_MODEL` env var (defaults to gpt-3.5-turbo)
+- GPT4All models run locally - no API key required
+- Optionally set `LLM_MODEL` env var (defaults to gpt4all-mini)
 - Query logs saved to `logs/query_logs.json`
 - Evaluation results saved to `logs/evaluation_results.json`
 

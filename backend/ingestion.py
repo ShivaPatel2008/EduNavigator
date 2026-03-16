@@ -1,10 +1,8 @@
-from llama_index import SimpleDirectoryReader, Document
-from llama_index.llms import OpenAI
+from llama_index.core import SimpleDirectoryReader, Document
 from pathlib import Path
 import os
 import json
 from dotenv import load_dotenv
-from gemini_llm import GeminiLLM
 
 # Load environment variables
 load_dotenv()
@@ -50,7 +48,8 @@ def load_documents_from_jsonl(jsonl_file: str = "final_rag_input.jsonl"):
                 documents.append(doc)
     
     # Add semantic tags
-    # llm = OpenAI(model=os.getenv("LLM_MODEL", "gpt-3.5-turbo"), temperature=0.1)
+    # from gemini_llm import GeminiLLM
+    # llm = GeminiLLM(model_name=os.getenv("LLM_MODEL", "gemini-3-flash-preview"), temperature=0.1)
     # for doc in documents:
     #     tags = tag_document(doc.text, llm)
     #     doc.metadata['tags'] = tags
