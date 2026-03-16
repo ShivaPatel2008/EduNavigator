@@ -91,7 +91,7 @@ def create_query_engine(storage_dir: str = "storage", llm_model: str = None, top
     Create a query engine with hybrid retrieval, MMR, and reranking.
     """
     if llm_model is None:
-        llm_model = os.getenv("LLM_MODEL", "gemini-pro")
+        llm_model = os.getenv("LLM_MODEL", "gemini-3-flash-preview")
 
     # Load index
     index = load_persisted_index(storage_dir)

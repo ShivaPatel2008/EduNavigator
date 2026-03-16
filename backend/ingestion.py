@@ -74,7 +74,7 @@ def load_documents(data_dir: str = "data"):
     documents = reader.load_data()
 
     # Add semantic tags
-    llm = GeminiLLM(model_name=os.getenv("LLM_MODEL", "gemini-pro"), temperature=0.1)
+    llm = GeminiLLM(model_name=os.getenv("LLM_MODEL", "gemini-3-flash-preview"), temperature=0.1)
     for doc in documents:
         tags = tag_document(doc.text, llm)
         doc.metadata['tags'] = tags

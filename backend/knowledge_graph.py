@@ -13,7 +13,7 @@ class KnowledgeGraph:
     def __init__(self):
         self.graph = nx.Graph()
         self.nlp = spacy.load("en_core_web_sm")
-        llm_model = os.getenv("LLM_MODEL", "gemini-pro")
+        llm_model = os.getenv("LLM_MODEL", "gemini-3-flash-preview")
         self.llm = GeminiLLM(model_name=llm_model, temperature=0.1)
 
     def extract_entities(self, text: str) -> List[str]:

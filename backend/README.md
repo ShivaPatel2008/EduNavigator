@@ -78,13 +78,14 @@ backend/
 ### Environment Variables
 
 - `GEMINI_API_KEY`: Your Google Gemini API key (required)
-- `LLM_MODEL`: LLM model to use (default: gemini-pro)
-  - Options: `gemini-pro`, `gemini-pro-vision`
+- `LLM_MODEL`: LLM model to use (default: gemini-3-flash-preview)
+  - Options: `gemini-pro`, `gemini-pro-vision`, `gemini-3-flash-preview`
 - `HOST`: Server host (default: 127.0.0.1)
 - `PORT`: Server port (default: 8001)
 
 ### Model Recommendations
 
+- **gemini-3-flash-preview**: Latest and fastest model, excellent performance (default)
 - **gemini-pro**: Fast and cost-effective for most use cases
 - **gemini-pro-vision**: For multimodal inputs (images + text)
 
