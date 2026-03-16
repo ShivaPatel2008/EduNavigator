@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+llama-index
+llama-index-vector-stores-faiss
+llama-index-embeddings-huggingface
+llama-index-llms-openai
+faiss-cpu
+pypdf
+python-multipart
+transformers
+torch
+rank-bm25
+networkx
+spacy
+en-core-web-sm

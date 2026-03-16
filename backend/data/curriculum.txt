@@ -1,0 +1,13 @@
+This is a sample curriculum document.
+
+Skills you will learn:
+- Python programming
+- Data analysis
+- Machine learning basics
+- Web development with FastAPI
+
+Admission requirements:
+- High school diploma
+- Basic math skills
+
+Fees: $5000 per year
