@@ -1,6 +1,7 @@
 from llama_index.llms import OpenAI
 import os
 from dotenv import load_dotenv
+from gemini_llm import GeminiLLM
 
 # Load environment variables
 load_dotenv()
@@ -8,8 +9,8 @@ load_dotenv()
 class AnswerValidator:
     def __init__(self, llm_model: str = None):
         if llm_model is None:
-            llm_model = os.getenv("LLM_MODEL", "gpt-3.5-turbo")
-        self.llm = OpenAI(model=llm_model, temperature=0.1)
+            llm_model = os.getenv("LLM_MODEL", "gemini-pro")
+        self.llm = GeminiLLM(model_name=llm_model, temperature=0.1)
 
     def validate(self, question: str, answer: str, context: str) -> bool:
         """

@@ -10,6 +10,7 @@ from answer_validator import AnswerValidator
 from hybrid_retriever import HybridRetriever
 from knowledge_graph import KnowledgeGraph
 from self_reflection import reflect_on_answer
+from gemini_llm import GeminiLLM
 import os
 import json
 import time
@@ -90,13 +91,13 @@ def create_query_engine(storage_dir: str = "storage", llm_model: str = None, top
     Create a query engine with hybrid retrieval, MMR, and reranking.
     """
     if llm_model is None:
-        llm_model = os.getenv("LLM_MODEL", "gpt-3.5-turbo")
+        llm_model = os.getenv("LLM_MODEL", "gemini-pro")
 
     # Load index
     index = load_persisted_index(storage_dir)
 
-    # LLM
-    llm = OpenAI(model=llm_model, temperature=0.1)
+    # LLM - Use Gemini instead of OpenAI
+    llm = GeminiLLM(model_name=llm_model, temperature=0.1)
 
     # Hybrid retriever
     documents = [node.text for node in index.docstore.docs.values()]

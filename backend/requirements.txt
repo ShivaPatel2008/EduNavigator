@@ -4,6 +4,7 @@ llama-index
 llama-index-vector-stores-faiss
 llama-index-embeddings-huggingface
 llama-index-llms-openai
+google-generativeai
 faiss-cpu
 pypdf
 python-multipart

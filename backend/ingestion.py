@@ -4,6 +4,7 @@ from pathlib import Path
 import os
 import json
 from dotenv import load_dotenv
+from gemini_llm import GeminiLLM
 
 # Load environment variables
 load_dotenv()
@@ -73,7 +74,7 @@ def load_documents(data_dir: str = "data"):
     documents = reader.load_data()
 
     # Add semantic tags
-    llm = OpenAI(model=os.getenv("LLM_MODEL", "gpt-3.5-turbo"), temperature=0.1)
+    llm = GeminiLLM(model_name=os.getenv("LLM_MODEL", "gemini-pro"), temperature=0.1)
     for doc in documents:
         tags = tag_document(doc.text, llm)
         doc.metadata['tags'] = tags

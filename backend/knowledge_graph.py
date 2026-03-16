@@ -4,6 +4,7 @@ from llama_index.llms import OpenAI
 import os
 from typing import List, Dict
 from dotenv import load_dotenv
+from gemini_llm import GeminiLLM
 
 # Load environment variables
 load_dotenv()
@@ -12,7 +13,8 @@ class KnowledgeGraph:
     def __init__(self):
         self.graph = nx.Graph()
         self.nlp = spacy.load("en_core_web_sm")
-        self.llm = OpenAI(model=os.getenv("LLM_MODEL", "gpt-3.5-turbo"), temperature=0.1)
+        llm_model = os.getenv("LLM_MODEL", "gemini-pro")
+        self.llm = GeminiLLM(model_name=llm_model, temperature=0.1)
 
     def extract_entities(self, text: str) -> List[str]:
         """
