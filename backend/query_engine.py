@@ -14,6 +14,10 @@ import os
 import json
 import time
 from typing import List, Dict
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Custom prompt
 CUSTOM_PROMPT = PromptTemplate(

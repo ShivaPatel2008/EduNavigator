@@ -1,5 +1,9 @@
 from llama_index.llms import OpenAI
 import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 class AnswerValidator:
     def __init__(self, llm_model: str = None):

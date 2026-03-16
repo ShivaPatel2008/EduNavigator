@@ -13,3 +13,4 @@ rank-bm25
 networkx
 spacy
 en-core-web-sm
+python-dotenv

@@ -233,3 +233,7 @@ backend/cache/
 backend/logs/
 backend/storage/  # Persisted index, can be regenerated
 backend/data/     # Uploaded documents, if not needed in repo
+
+# Environment files
+.env.local
+.env.*.local

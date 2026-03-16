@@ -5,6 +5,10 @@ import os
 import json
 from datetime import datetime
 from query_engine import query_with_sources, create_query_engine
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 app = FastAPI(title="EduNavigator Course Assistant", version="3.0.0")
 

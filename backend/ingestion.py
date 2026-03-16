@@ -1,7 +1,12 @@
-from llama_index import SimpleDirectoryReader
+from llama_index import SimpleDirectoryReader, Document
 from llama_index.llms import OpenAI
 from pathlib import Path
 import os
+import json
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 def tag_document(content: str, llm) -> list:
     """
@@ -18,6 +23,38 @@ def tag_document(content: str, llm) -> list:
     response = llm.complete(prompt).text.strip()
     tags = [tag.strip() for tag in response.split(',') if tag.strip()]
     return tags
+
+def load_documents_from_jsonl(jsonl_file: str = "final_rag_input.jsonl"):
+    """
+    Load documents from JSONL file with semantic tagging.
+    Each line should be a JSON object with 'source' and 'text' fields.
+    """
+    documents = []
+    
+    with open(jsonl_file, 'r', encoding='utf-8') as f:
+        for line in f:
+            if line.strip():
+                data = json.loads(line.strip())
+                source = data.get('source', 'Unknown')
+                text = data.get('text', '')
+                
+                # Create Document object
+                doc = Document(
+                    text=text,
+                    metadata={
+                        'file_name': source,
+                        'source': source
+                    }
+                )
+                documents.append(doc)
+    
+    # Add semantic tags
+    # llm = OpenAI(model=os.getenv("LLM_MODEL", "gpt-3.5-turbo"), temperature=0.1)
+    # for doc in documents:
+    #     tags = tag_document(doc.text, llm)
+    #     doc.metadata['tags'] = tags
+    
+    return documents
 
 def load_documents(data_dir: str = "data"):
     """

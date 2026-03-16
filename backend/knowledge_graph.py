@@ -3,6 +3,10 @@ import spacy
 from llama_index.llms import OpenAI
 import os
 from typing import List, Dict
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 class KnowledgeGraph:
     def __init__(self):

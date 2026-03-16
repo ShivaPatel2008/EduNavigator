@@ -39,14 +39,26 @@ backend/
 
 ## Setup
 
-1. Install dependencies:
+1. **Install dependencies:**
    ```bash
    pip install -r requirements.txt
    ```
 
-2. Place your program documents (text/PDF) in the `data/` folder.
+2. **Set up API keys:**
+   - Copy `.env` file and add your OpenAI API key:
+   ```bash
+   cp .env .env.local
+   ```
+   - Edit `.env.local` and add your OpenAI API key:
+   ```
+   OPENAI_API_KEY=your_actual_api_key_here
+   ```
+   - Get your API key from: https://platform.openai.com/api-keys
+   - The `.env.local` file is gitignored for security
 
-3. Build the vector index:
+3. **Place your program documents** (text/PDF) in the `data/` folder.
+
+4. **Build the vector index:**
    ```bash
    python build_index.py
    ```
@@ -60,6 +72,22 @@ backend/
    ```bash
    python evaluate_rag.py
    ```
+
+## Configuration
+
+### Environment Variables
+
+- `OPENAI_API_KEY`: Your OpenAI API key (required)
+- `LLM_MODEL`: LLM model to use (default: gpt-3.5-turbo)
+  - Options: `gpt-4`, `gpt-4-turbo-preview`, `gpt-3.5-turbo`
+- `HOST`: Server host (default: 127.0.0.1)
+- `PORT`: Server port (default: 8001)
+
+### Model Recommendations
+
+- **gpt-3.5-turbo**: Fast and cost-effective for most use cases
+- **gpt-4**: Higher quality responses, slower and more expensive
+- **gpt-4-turbo-preview**: Latest GPT-4 model with improved performance
 
 ## API Usage
 
